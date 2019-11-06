@@ -1,0 +1,303 @@
+
+
+import java.util.Arrays;
+import java.util.Random;
+import java.util.Scanner;
+
+
+public class BattleShip
+{
+	private static final int[] SHIP_SIZE = { 1, 3, 5 }; //ship size
+	private static final int[] GRID_SIZE = new int[26];
+	private static Scanner input;
+	private static boolean[] shipPosition;
+	private static int successfulAttempts;
+	private static int failedAttempts;
+	private static int[] repeatingGuesses;
+	private static int[] sizeOfShip = new int[1];
+	private static int[] shipHit = new int[SHIP_SIZE.length];
+	private static String enemy1;
+	private static String enemy2;
+	private static String enemy3;
+
+	
+	public static void main(String[] args)
+	{
+			System.out.println("Welcome to BattleShip!");
+			System.out.println("The sizes of the ships are : " + Arrays.toString(SHIP_SIZE));
+			System.out.println("Enter a number between 0 and 25 to fire at the ships! You are only allowed 5 misses!");
+
+			boolean gameOver = false;
+			boolean playAnother = true;
+			input = new Scanner(System.in);
+			
+		do
+		{
+			createShips();
+			
+			while(!gameOver)
+			{
+				// test to display value of shipPositions: System.out.println(Arrays.toString(shipPosition));
+				
+				checkAttempt(userInput());
+				checkSink();
+				System.out.printf("\nLIST OF ENEMIES DEFEATED: \nSize 1: %s\nSize 3: %s \nSize 5: %s\n ", enemy1, enemy2, enemy3 );
+
+				gameOver = checkGameOver();	
+			}
+			
+			//successfulAttempts == 9 or failedAttempts == 5
+			if(gameOver)
+			{
+				System.out.println("Want to play again? Enter 'y' or 'n'");
+				char playAgain = input.nextLine().toLowerCase().charAt(0);
+			
+				if(playAgain == 'y') 
+				{
+					gameOver = false;
+				}
+				else if(playAgain == 'n') 
+				{
+					playAnother = false;
+				}
+			}
+						
+		}while(playAnother);
+		
+		System.out.println("Thank you for playing. Until next time!");
+		input.close();
+		System.exit(0);
+	}
+			
+			
+			
+	
+	// create a random array of ships and using the repeating method, make sure it fits inside the allocated space
+	public static void createShips()
+	{
+		Random rand = new Random();
+		shipPosition = new boolean[GRID_SIZE.length];
+		repeatingGuesses = new int[GRID_SIZE.length];
+		successfulAttempts = 0;
+		failedAttempts = 0;
+		
+		//initialize each of the ships hit counter
+		for(int i = 0; i < shipHit.length; i++)
+		{
+			shipHit[i] = 0;
+		}
+	
+		//initialize enemy strings
+		enemy1 = "";
+		enemy2 = "";
+		enemy3 = "";
+		
+		for(int i : SHIP_SIZE)
+		{
+			int currentShip = i;
+			int startingPoint = 0;
+			int possibleStartingLocations = 21;
+			
+			do
+			{
+				startingPoint = rand.nextInt(possibleStartingLocations);
+			}
+			while(!repeatingPoint(startingPoint, currentShip));
+				
+			for(int j = 0; j < currentShip; j++)
+			{
+				shipPosition[(startingPoint + j)] = true;
+			}
+			
+		}
+		
+		
+	}
+	
+	// make sure there is space between ships
+	private static boolean repeatingPoint(int start, int endPoint)
+	{
+		int checkBehind = 0;
+		try 
+		{
+			if(start - 1 >= 0)
+				{
+					checkBehind = start - 1;
+				}
+			
+			for (int i = start; i <= start + endPoint; i++) 
+		    {
+		      if (shipPosition[i] == true) 
+		      {
+		        return false;
+		      }	      
+		    }
+			
+			if(shipPosition[checkBehind] == true)
+			{
+				return false;
+			}
+			
+		}
+		catch(ArrayIndexOutOfBoundsException exception) 
+		{
+		    return false;
+		}
+		
+	    
+	    return true;
+	}
+	
+	
+	// gets a number between 0 and max
+	private static int userInput()
+	{
+		int guess = 0;
+		do 
+		{
+			guess = Integer.parseInt(input.nextLine());
+			if ((guess < 0) || (guess >= 26))
+			{
+		        System.out.println("Stay within bounds! Try again");
+			}
+		}
+		while (guess < 0 || guess >= 26);
+			
+		return guess;
+	
+	}
+
+
+	public static boolean checkAttempt(int attempt)
+	{	
+		sizeOfShip[0] = 0;
+
+		if(repeatingGuesses[attempt] == 0)
+		{
+			if(shipPosition[attempt] == false)
+			{
+				System.out.println("You missed! Try again");
+				failedAttempts += 1;
+		
+			}
+			else
+			{
+				System.out.println("That's a hit! Fire again captain!\n");
+				successfulAttempts += 1;
+				
+				// extra credit (check upper limit when hitting a part of the ship. Using both upper and lower limit to get the size of the ship)
+				for(int j = 0; j < 5; j++)
+				{
+					
+					try 
+					{
+						if(shipPosition[attempt + j] == true)
+						{
+							sizeOfShip[0] += 1;
+						}
+						else
+						{
+							break;
+						}
+					}
+					catch(ArrayIndexOutOfBoundsException exception) 
+					{
+					    sizeOfShip[0] += 0;
+					}
+				}
+				
+				//lower limit
+				for(int k = 0; k < 5; k++)
+				{
+					try 
+					{
+						if(shipPosition[attempt - (k+1)] == true)
+						{
+							sizeOfShip[0] += 1;
+						}
+						else
+						{
+							break;
+						}
+					}
+					catch(ArrayIndexOutOfBoundsException exception) 
+					{
+					    sizeOfShip[0] += 0;
+					}
+							
+				}
+			
+							
+			}
+			repeatingGuesses[attempt] += 1;
+			
+		}
+		else 
+		{
+			System.out.println("You already fired there me maty!");
+		}
+		
+		System.out.printf("Misses: %d\nHits: %d\n",  failedAttempts, successfulAttempts);
+
+		return false;
+	}
+	
+	//adds hit to whichever boat is being under attack
+	public static void checkSink()
+	{
+		if(sizeOfShip[0] == 1)
+		{
+			shipHit[0] += 1;
+		}
+		
+		if(sizeOfShip[0] == 3)
+		{
+			shipHit[1] += 1;
+		}
+		
+		if(sizeOfShip[0] == 5)
+		{
+			shipHit[2] += 1;
+		}
+		
+		//if boat is hit all possible times, prints SUNK	
+		if(shipHit[0] == 1)
+		{
+			enemy1 = "SUNK";
+		}
+		
+		if(shipHit[1] == 3)
+		{
+			enemy2 = "SUNK";
+		}
+
+		if(shipHit[2] == 5)
+		{
+			enemy3 = "SUNK";
+		}
+		
+	
+	}
+	
+
+	//destroy all ships, win game. If you go over max number of misses, you lose.
+	public static boolean checkGameOver()
+	{
+			if(successfulAttempts == 9)
+			{
+				System.out.printf("\nYOU HAVE WON! ARRRRGH!\n");
+				return true;
+			}
+			else if(failedAttempts == 5)
+			{
+				System.out.printf("\nGAME OVER\n");
+				return true;
+			}
+			else
+				return false;
+	}
+	
+
+	
+	
+}
